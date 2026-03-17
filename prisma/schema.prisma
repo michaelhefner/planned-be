@@ -1,0 +1,86 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  email     String   @unique
+  password  String
+  createdAt DateTime @default(now())
+  // relations
+  groceries GroceryItem[]
+  recipes   Recipe[]
+  calendar  CalendarEntry[]
+  lists     GroceryList[]
+}
+
+model GroceryItem {
+  id        Int      @id @default(autoincrement())
+  name      String
+  quantity  Float    @default(0)
+  unit      String?
+  inStock   Boolean  @default(true)
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  // relations
+  recipeIngredients RecipeIngredient[]
+  listItems         GroceryListItem[]
+}
+
+model Recipe {
+  id          Int                @id @default(autoincrement())
+  name        String
+  description String?
+  servings    Int?
+  userId      Int
+  user        User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt   DateTime           @default(now())
+  ingredients RecipeIngredient[]
+  calendar    CalendarEntry[]
+}
+
+model RecipeIngredient {
+  id           Int @id @default(autoincrement())
+  recipe       Recipe @relation(fields: [recipeId], references: [id])
+  recipeId     Int
+  groceryItem  GroceryItem @relation(fields: [groceryItemId], references: [id])
+  groceryItemId Int
+  amount       Float
+  unit         String?
+}
+
+model CalendarEntry {
+  id        Int      @id @default(autoincrement())
+  date      DateTime
+  recipe    Recipe   @relation(fields: [recipeId], references: [id])
+  recipeId  Int
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  notes     String?
+}
+
+model GroceryList {
+  id        Int               @id @default(autoincrement())
+  name      String
+  userId    Int
+  user      User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime          @default(now())
+  items     GroceryListItem[]
+}
+
+model GroceryListItem {
+  id            Int         @id @default(autoincrement())
+  groceryItem   GroceryItem @relation(fields: [groceryItemId], references: [id])
+  groceryItemId Int
+  quantityNeeded Float
+  checked       Boolean     @default(false)
+  groceryList   GroceryList @relation(fields: [groceryListId], references: [id])
+  groceryListId Int
+}
